@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_calculator_app/models/history_model.dart';
 import 'package:flutter_calculator_app/provider/calculator_provider.dart';
+import 'package:flutter_calculator_app/services/services.dart';
 import 'package:provider/provider.dart';
 
 import 'history_page.dart';
@@ -15,6 +17,8 @@ class _MyAppState extends State<MyApp> {
   //ส่วน add เข้า provider
   TextEditingController tempTextController = TextEditingController();
   TextEditingController tempSumTextController = TextEditingController();
+
+  Services services = FirebaseServices();
 
 //ส่วนเก็บค่าไว้คำนวน
   dynamic text = '';
@@ -41,6 +45,7 @@ class _MyAppState extends State<MyApp> {
         actions: [
           TextButton(
               onPressed: () {
+                calculatorProvider.updateHistoryToFirebase(calculatorProvider.history);
                 Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -135,7 +140,7 @@ class _MyAppState extends State<MyApp> {
                         }
                       } else if (text == '=') {
                       tempTextController.text += text;
-                       calculatorProvider.history.add(tempTextController.text + finalResult);
+                       calculatorProvider.addToListHistory(HistoryItemModel({'result':finalResult, 'sum':tempTextController.text}));
                       } else {
                         tempTextController.text += text;
                         print(tempTextController.text);
@@ -274,5 +279,14 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     // TODO: implement initState
     super.initState();
+     WidgetsBinding.instance!.addPostFrameCallback((timeStamp) {
+      Provider.of<CalculatorProvider>(context, listen: false).getHistoryFromFirebase();
+    });
+    getData();
+  }
+
+  Future<void> getData() async {
+   var data = await services.getHistoryList();
+  //  print(data[0].history[0]!.result);
   }
 }
